@@ -5,26 +5,8 @@ import {
 	HTMLResourceException,
 } from "@Defines/Exception";
 
-class InstagramParser {
-	constructor() {}
-
-	/**
-	 * 
-	 * @param uri 입력받은 URI
-	 */
-	public static parse(uri: string) {
-		uri = uri.substr(0, uri.indexOf("?")-1);
-
-		const regex = /(?:(?:http|https):\/\/)?(?:www\.)?(?:instagram\.com|instagr\.am)\/p\/([A-Za-z0-9-_\.]+)/im;
-		if (regex.test(uri)) {
-			return new Infomation(uri);
-		}
-		else new InstagramURIException(InstagramURIException.UNSUPPORTED_TYPE);
-	}
-}
-
 /** 파싱하는 인스타그램 데이터 입니다. */
-class Infomation {
+class InstagramShared {
 	/**
 	 * 인스타그램 URI 정보입니다.
 	 */
@@ -35,11 +17,18 @@ class Infomation {
 	 */
 	public readonly uid!: string;
 
+	/**
+	 * 가져온 게시물의 데이터
+	 */
 	private sharedData: object | null = null;
 
-	private itionalData: object | null = null;
-
-	constructor(uri: string) {
+	/**
+	 * 
+	 * @param uri 
+	 * @param resolve 
+	 * @param reject 
+	 */
+	constructor(uri: string, resolve: (o: object | null) => void, reject: (e: Error) => void) {
 		this.uri = uri;
 		this.uid = uri.substr(uri.lastIndexOf("/"));
 
@@ -50,21 +39,19 @@ class Infomation {
 				let sharedData = source.substr(source.indexOf("window._sharedData") + "window._sharedData".length + 1);
 				sharedData = sharedData.substr(0, sharedData.indexOf("</script>") - 1);
 				this.sharedData = JSON.parse(sharedData);
-				
-				let itionalData = source.substr(
-					source.indexOf(`window.__additionalDataLoaded('/p/${this.uid}/',`) + `window.__additionalDataLoaded('/p/${this.uid}/',`.length
-				);
-				itionalData = itionalData.substr(0, itionalData.indexOf("</script>") - 1);
-				this.itionalData = JSON.parse(itionalData);	
+
+				resolve(this.sharedData);
 			} catch (e) {
 				throw new Error(e);
 			}
 		}).catch((e) => {
-			throw new Error(e);
+			reject(new Error(e));
 		});
 	}
 
-	/** URI 페이지의 소스를 가져옵니다. */
+	/**
+	 * URI 페이지의 소스를 가져옵니다.
+	 */
 	public pageSource() {
 		return new Promise<string>((resolve, reject) => {
 			axios.get(this.uri, {
@@ -85,9 +72,25 @@ class Infomation {
 	public getSharedData() {
 		return this.sharedData;
 	}
+}
 
-	public getItionalData() {
-		return this.itionalData;
+class InstagramParser {
+	constructor() {}
+
+	/**
+	 * 
+	 * @param uri 입력받은 URI
+	 */
+	public static parse(uri: string) {
+		uri = uri.substr(0, uri.indexOf("?")-1);
+
+		const regex = /(?:(?:http|https):\/\/)?(?:www\.)?(?:instagram\.com|instagr\.am)\/p\/([A-Za-z0-9-_\.]+)/im;
+		if (regex.test(uri)) {
+			return new Promise((resolve, reject) => {
+				new InstagramShared(uri, resolve, reject);
+			});
+		}
+		else new InstagramURIException(InstagramURIException.UNSUPPORTED_TYPE);
 	}
 }
 
