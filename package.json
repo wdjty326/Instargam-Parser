@@ -6,7 +6,7 @@
   "scripts": {
     "publish": "NODE_ENV=production webpack --config webpack.config.js",
     "build": "NODE_ENV=development webpack --config webpack.config.js",
-    "test": "babel-node test.js"
+    "test": "babel-node distools/test.js"
   },
   "author": "",
   "license": "ISC",
