@@ -14,8 +14,8 @@ module.exports = () => {
 		output: {
 			filename: "[name].js",
 			path: path.resolve(__dirname, "dist"),
-			library: "[name]",
-			libraryTarget: "umd",
+			library: "InstagramParser",
+			libraryTarget: "commonjs",
 			globalObject: "this"
 		},
 		module: {
@@ -32,9 +32,7 @@ module.exports = () => {
 		],
 		resolve: {
 			alias: {
-				"@": path.resolve(__dirname, "src"),
-				"@Libs": path.resolve(__dirname, "src/Libs"),
-				"@Defines": path.resolve(__dirname, "src/Defines")
+				"@": path.resolve(__dirname, "src")
 			},
 			extensions: [".js", ".ts"]
 		}
